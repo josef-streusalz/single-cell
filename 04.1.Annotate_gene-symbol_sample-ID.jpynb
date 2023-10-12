@@ -1,0 +1,519 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "cae27996-a7b8-421b-a806-8130570455ef",
+   "metadata": {},
+   "source": [
+    "# Translate the Ensembl Gene IDs of the data object into Gene Symbols and add as key, var, or obs"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "56da0d6c-9e14-4677-b14e-4c66547c784b",
+   "metadata": {},
+   "source": [
+    "## Load adata after processing by 01 to 04"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "eb938d57-07f0-4b7f-a665-9126fe88dc38",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import scanpy as sc\n",
+    "import matplotlib.pyplot as plt\n",
+    "import anndata as ad\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "f9c3539c-aac2-4c28-bc1d-b20dc4a1f97b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "454afeb5-13a4-4aaf-ab84-07902e9a033c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "adata = sc.read(\"/storage/users/sac43cg/res_Samantha_1/outs/per_sample_outs/clustered_adata.h5ad\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "18b107bc-0e48-4773-8542-6848bf96c9cc",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "AnnData object with n_obs × n_vars = 10837 × 200\n",
+       "    obs: 'condition', 'n_genes_by_counts', 'log1p_n_genes_by_counts', 'total_counts', 'log1p_total_counts', 'pct_counts_in_top_50_genes', 'pct_counts_in_top_100_genes', 'pct_counts_in_top_200_genes', 'pct_counts_in_top_500_genes', 'pct_cmo', 'total_counts_mito', 'log1p_total_counts_mito', 'pct_counts_mito', 'total_counts_ribo', 'log1p_total_counts_ribo', 'pct_counts_ribo', 'louvain', 'louvain_combined'\n",
+       "    var: 'n_cells_by_counts', 'mean_counts', 'log1p_mean_counts', 'pct_dropout_by_counts', 'total_counts', 'log1p_total_counts', 'CMO', 'mito', 'ribo', 'highly_variable', 'means', 'dispersions', 'dispersions_norm'\n",
+       "    uns: 'condition_colors', 'hvg', 'log1p', 'louvain', 'louvain_combined_colors', 'neighbors', 'pca', 'umap'\n",
+       "    obsm: 'X_pca', 'X_umap'\n",
+       "    varm: 'PCs'\n",
+       "    obsp: 'connectivities', 'distances'"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "89c6c0a8-cda2-4d02-b901-066f9ebf4b1f",
+   "metadata": {},
+   "source": [
+    "#### Create dictionary"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "794470e1-686e-4109-93b1-f3e5223217a2",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from biomart import BiomartServer\n",
+    "\n",
+    "# Connect to the BioMart server\n",
+    "server = BiomartServer(\"http://ensembl.org/biomart\")\n",
+    "\n",
+    "# Select the human genes dataset\n",
+    "dataset = server.datasets['hsapiens_gene_ensembl']\n",
+    "\n",
+    "# Query BioMart to get the translation from Ensembl ID to gene symbol\n",
+    "response = dataset.search({\n",
+    "    'attributes': ['ensembl_gene_id', 'external_gene_name'],\n",
+    "})\n",
+    "\n",
+    "# Initialize an empty dictionary to store the mapping\n",
+    "ensembl_to_gene_name = {}\n",
+    "\n",
+    "# Iterate through the response lines\n",
+    "for line in response.iter_lines():\n",
+    "    # Decode the line and split it into Ensembl ID and gene name\n",
+    "    decoded_line = line.decode('utf-8')\n",
+    "    ensembl_id, gene_name = decoded_line.split('\\t')\n",
+    "    \n",
+    "    # Store the mapping in the dictionary\n",
+    "    ensembl_to_gene_name[ensembl_id] = gene_name\n",
+    "\n",
+    "# Now, ensembl_to_gene_name is a dictionary with Ensembl IDs as keys and gene names as values.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7ee296b3-b56f-473e-acb3-4882707e7f01",
+   "metadata": {},
+   "source": [
+    "## Name Var_names or var->gene.symbol"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "1e3e249d-b0b0-4daf-afb3-4c7918e7ed69",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "adata.var['gene_symbol'] = [ensembl_to_gene_name.get(gene_id, 'NA') for gene_id in adata.var_names]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "feacc28f-b423-42c0-acee-781e6004d385",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "adata.var_names = [ensembl_to_gene_name.get(gene_id, gene_id) for gene_id in adata.var_names]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "1553d9db-41bf-4f5d-8244-8dad45602e1b",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "AnnData object with n_obs × n_vars = 10837 × 200\n",
+       "    obs: 'condition', 'n_genes_by_counts', 'log1p_n_genes_by_counts', 'total_counts', 'log1p_total_counts', 'pct_counts_in_top_50_genes', 'pct_counts_in_top_100_genes', 'pct_counts_in_top_200_genes', 'pct_counts_in_top_500_genes', 'pct_cmo', 'total_counts_mito', 'log1p_total_counts_mito', 'pct_counts_mito', 'total_counts_ribo', 'log1p_total_counts_ribo', 'pct_counts_ribo', 'louvain', 'louvain_combined'\n",
+       "    var: 'n_cells_by_counts', 'mean_counts', 'log1p_mean_counts', 'pct_dropout_by_counts', 'total_counts', 'log1p_total_counts', 'CMO', 'mito', 'ribo', 'highly_variable', 'means', 'dispersions', 'dispersions_norm', 'gene_symbol'\n",
+       "    uns: 'condition_colors', 'hvg', 'log1p', 'louvain', 'louvain_combined_colors', 'neighbors', 'pca', 'umap'\n",
+       "    obsm: 'X_pca', 'X_umap'\n",
+       "    varm: 'PCs'\n",
+       "    obsp: 'connectivities', 'distances'"
+      ]
+     },
+     "execution_count": 15,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "id": "bb415da3-c467-486a-8c25-b12dcc6f0e06",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "PADI2        PADI2\n",
+       "MATN1        MATN1\n",
+       "CLSPN        CLSPN\n",
+       "NGF            NGF\n",
+       "TXNIP        TXNIP\n",
+       "            ...   \n",
+       "SHROOM4    SHROOM4\n",
+       "BEX2          BEX2\n",
+       "TSC22D3    TSC22D3\n",
+       "FGF13        FGF13\n",
+       "BGN            BGN\n",
+       "Name: gene_symbol, Length: 200, dtype: object"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# optional\n",
+    "adata.var['gene_symbol']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "defd2269-a86c-475d-89f9-0fd7373a4cc1",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Index(['PADI2', 'MATN1', 'CLSPN', 'NGF', 'TXNIP', 'S100A2', 'PTGS2',\n",
+       "       'MIR181A1HG', 'CD55', 'G0S2',\n",
+       "       ...\n",
+       "       'RUNX1', 'TIMP3', 'HMOX1', 'CACNG2', 'SRPX', 'SHROOM4', 'BEX2',\n",
+       "       'TSC22D3', 'FGF13', 'BGN'],\n",
+       "      dtype='object', length=200)"
+      ]
+     },
+     "execution_count": 17,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata.var_names"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "de23c608-a858-4e7c-afa8-cd4119f3b812",
+   "metadata": {},
+   "source": [
+    "## Names Sample IDs as obs"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "id": "ebb49c13-9c90-4d16-985f-dcc4f5e7386f",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Index(['AAACCCAGTAGGCTCC-1', 'AAACCCAGTCGCAACC-1', 'AAACCCATCCACAAGT-1',\n",
+       "       'AAACGCTTCACTACGA-1', 'AAACGCTTCAGCCTCT-1', 'AAAGAACAGATACAGT-1',\n",
+       "       'AAAGAACAGCCTCGTG-1', 'AAAGAACAGTAATCCC-1', 'AAAGAACCAACATCGT-1',\n",
+       "       'AAAGAACGTCGCGGTT-1',\n",
+       "       ...\n",
+       "       'TTGTGGATCTAGCAAC-1', 'TTGTTCACAGGTCAAG-1', 'TTGTTTGAGCTCATAC-1',\n",
+       "       'TTTACGTTCAAGGCTT-1', 'TTTACTGCAGCTACAT-1', 'TTTACTGTCATTACTC-1',\n",
+       "       'TTTCACAGTGATATAG-1', 'TTTCACATCGATGCAT-1', 'TTTCATGTCCCTCTAG-1',\n",
+       "       'TTTGACTGTTCCGGTG-1'],\n",
+       "      dtype='object', name='barcode', length=10837)"
+      ]
+     },
+     "execution_count": 18,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata.obs_names"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4e9939f4-92d4-4e9a-97b9-cc540fa6d5ed",
+   "metadata": {},
+   "source": [
+    "### Build a new Index by combining Barcode and Conditions"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "id": "52c4f188-ad0e-4f86-afc0-e5aa83d2a793",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#df = pd.DataFrame(adata.X, index=adata.obs.index, columns=adata.var.index)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "id": "68e141ef-3516-48cd-b2c2-1863f66fb14c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#df.index = df.index + '_' + adata.obs['conditions'].values\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "id": "ca5aaf9b-96cb-4b77-be68-7bf3eb7a5cef",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def short_hash(input_string, length=8):\n",
+    "    \"\"\"Get a shorter hash representation of the input string.\"\"\"\n",
+    "    return str(hash(input_string))[:length]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "id": "4b6d4677-df29-4006-bbcc-bfa7685efdfc",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "adata.obs['index'] = [short_hash(name) for name in adata.obs_names]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "id": "18fea574-6c4c-4bca-a6b3-b8b31cd5ef89",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "adata.obs['IDs'] = [f\"{condition}_{name}\" for condition, name in zip(adata.obs['condition'], adata.obs['index'] )]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "id": "1de185df-8074-4a9a-9dc4-8324e8cc83ce",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#optional\n",
+    "adata.obs_names = adata.obs['IDs']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "id": "adeb8ecc-db69-4556-97c1-6b922e88fcc3",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "IDs\n",
+       "CTRL_1_29681340              CTRL_1_29681340\n",
+       "CTRL_1_-1908501              CTRL_1_-1908501\n",
+       "CTRL_1_-3802404              CTRL_1_-3802404\n",
+       "CTRL_1_-1033973              CTRL_1_-1033973\n",
+       "CTRL_1_39402456              CTRL_1_39402456\n",
+       "                                ...         \n",
+       "TGFb1_GEM_2_18941449    TGFb1_GEM_2_18941449\n",
+       "TGFb1_GEM_2_-3133511    TGFb1_GEM_2_-3133511\n",
+       "TGFb1_GEM_2_-7289259    TGFb1_GEM_2_-7289259\n",
+       "TGFb1_GEM_2_-8693033    TGFb1_GEM_2_-8693033\n",
+       "TGFb1_GEM_2_-3692203    TGFb1_GEM_2_-3692203\n",
+       "Name: IDs, Length: 10837, dtype: object"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata.obs['IDs']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "id": "71592dfc-a656-4cbb-88f1-5848f399134b",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Index(['CTRL_1_29681340', 'CTRL_1_-1908501', 'CTRL_1_-3802404',\n",
+       "       'CTRL_1_-1033973', 'CTRL_1_39402456', 'CTRL_1_-7632450',\n",
+       "       'CTRL_1_61335932', 'CTRL_1_-1846988', 'CTRL_1_67874121',\n",
+       "       'CTRL_1_-5116724',\n",
+       "       ...\n",
+       "       'TGFb1_GEM_2_-1415851', 'TGFb1_GEM_2_43379685', 'TGFb1_GEM_2_-4355339',\n",
+       "       'TGFb1_GEM_2_12169569', 'TGFb1_GEM_2_55440065', 'TGFb1_GEM_2_18941449',\n",
+       "       'TGFb1_GEM_2_-3133511', 'TGFb1_GEM_2_-7289259', 'TGFb1_GEM_2_-8693033',\n",
+       "       'TGFb1_GEM_2_-3692203'],\n",
+       "      dtype='object', name='IDs', length=10837)"
+      ]
+     },
+     "execution_count": 27,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata.obs_names"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "id": "6ca8e694-1edd-4032-96c1-deaadeca219a",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Index(['PADI2', 'MATN1', 'CLSPN', 'NGF', 'TXNIP', 'S100A2', 'PTGS2',\n",
+       "       'MIR181A1HG', 'CD55', 'G0S2',\n",
+       "       ...\n",
+       "       'RUNX1', 'TIMP3', 'HMOX1', 'CACNG2', 'SRPX', 'SHROOM4', 'BEX2',\n",
+       "       'TSC22D3', 'FGF13', 'BGN'],\n",
+       "      dtype='object', length=200)"
+      ]
+     },
+     "execution_count": 29,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata.var_names"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4677a98e-9d95-4f28-b404-68fac07a57d4",
+   "metadata": {},
+   "source": [
+    "## Export"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "id": "535e44c0-2f43-4edd-bbd7-f2de15779aa3",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "adata.write('/storage/users/sac43cg/res_Samantha_1/outs/per_sample_outs/annotated_adata.h5ad')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6cce892a-a9a2-45d9-9a83-405296387be4",
+   "metadata": {},
+   "source": [
+    "# Snippets"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d0a001b7-579a-4675-ac82-0341ad21d368",
+   "metadata": {},
+   "source": [
+    "## If you have a dictionary of Ensembl you can extratc the counts matrix and annotate \n",
+    "## the columns and rows with a Sample ID and Gene Symbols"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "5176cc81-5c60-4307-99f2-86d688ddb3ee",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# 1. Extracting data\n",
+    "df = pd.DataFrame(adata.X, index=adata.obs.index, columns=adata.var.index)\n",
+    "\n",
+    "# 2. Combining barcodes and conditions\n",
+    "df.index = df.index + '_' + adata.obs['conditions'].values\n",
+    "\n",
+    "# 3. Translate Ensembl IDs to Gene Symbols\n",
+    "# Assuming ensembl_to_symbol is your dictionary of Ensembl ID -> Gene Symbol\n",
+    "df.columns = df.columns.map(lambda x: ensembl_to_symbol.get(x, x))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "af546031-417c-4f5c-9bd8-1072b2e0e515",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "counts = pd.DataFrame(adata.X, index=adata.obs_names, columns=adata.var_names)\n",
+    "symbol_adata=sc.AnnData(counts)"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "scanpy-env3",
+   "language": "python",
+   "name": "scanpy-env3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.17"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
