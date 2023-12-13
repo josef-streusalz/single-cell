@@ -1,0 +1,36 @@
+[gene-expression]
+reference,/storage/users/sac43cg/refdata-gex-GRCh38-2020-A
+
+[libraries]
+fastq_id,fastqs,feature_types
+gex1,/path/to/fastqs,Gene Expression
+mux1,/path/to/fastqs,Multiplexing Capture
+
+SCC0019_Dandekar_CP_C2_S2_L001_I1_001.fastq,/path/to/fastqs,Multiplexing Capture
+SCC0019_Dandekar_CP_C2_S2_L001_I2_001.fastq,/path/to/fastqs,Multiplexing Capture
+SCC0019_Dandekar_CP_C2_S2_L001_R1_001.fastq,/path/to/fastqs,Multiplexing Capture
+SCC0019_Dandekar_CP_C2_S2_L001_R2_001.fastq,/path/to/fastqs,Multiplexing Capture
+SCC0019_Dandekar_CP_C2_S2_L002_I1_001.fastq,/path/to/fastqs,Multiplexing Capture
+SCC0019_Dandekar_CP_C2_S2_L002_I2_001.fastq,/path/to/fastqs,Multiplexing Capture
+SCC0019_Dandekar_CP_C2_S2_L002_R1_001.fastq,/path/to/fastqs,Multiplexing Capture
+SCC0019_Dandekar_CP_C2_S2_L002_R2_001.fastq,/path/to/fastqs,Multiplexing Capture
+SCC0019_Dandekar_GEX_H3_S1_L001_I1_001.fastq,/path/to/fastqs,Gene Expression
+SCC0019_Dandekar_GEX_H3_S1_L001_I2_001.fastq,/path/to/fastqs,Gene Expression
+SCC0019_Dandekar_GEX_H3_S1_L001_R1_001.fastq,/path/to/fastqs,Gene Expression
+SCC0019_Dandekar_GEX_H3_S1_L001_R2_001.fastq,/path/to/fastqs,Gene Expression
+SCC0019_Dandekar_GEX_H3_S1_L002_I1_001.fastq,/path/to/fastqs,Gene Expression
+SCC0019_Dandekar_GEX_H3_S1_L002_I2_001.fastq,/path/to/fastqs,Gene Expression
+SCC0019_Dandekar_GEX_H3_S1_L002_R1_001.fastq,/path/to/fastqs,Gene Expression
+SCC0019_Dandekar_GEX_H3_S1_L002_R2_001.fastq,/path/to/fastqs,Gene Expression
+
+[samples]
+sample_id,cmo_ids
+
+CTRL_1,CMO301
+CTRL_2,CMO302
+GEM_2,CMO304
+TGFb1_1,CMO305
+TGFb1_2,CMO306
+TGFb1_GEM_1,CMO307
+TGFb1_GEM_2,CMO308
+CTRL_2D,CMO309

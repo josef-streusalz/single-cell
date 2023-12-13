@@ -1,0 +1,6 @@
+
+cellranger aggr --id=OUTPUT_DIR --csv=SAMPLE_CSV --normalize=METHOD
+
+
+
+/artemis/software/cellranger/bin/cellranger aggr --localcores 90 --id="./res_aggr" --csv="cellRanger_aggr.csv" --normalize="mapped"

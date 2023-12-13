@@ -1,0 +1,10 @@
+sample_id, molecule_h5
+CTRL_1,/storage/users/sac43cg/res_Samantha/outs/per_sample_outs/CTRL_1/count/sample_molecule_info.h5
+CTRL_2,/storage/users/sac43cg/res_Samantha/outs/per_sample_outs/CTRL_2/count/sample_molecule_info.h5
+GEM_2,/storage/users/sac43cg/res_Samantha/outs/per_sample_outs/GEM_2/count/sample_molecule_info.h5
+TGFb1_1,/storage/users/sac43cg/res_Samantha/outs/per_sample_outs/TGFb1_1/count/sample_molecule_info.h5
+TGFb1_2,/storage/users/sac43cg/res_Samantha/outs/per_sample_outs/TGFb1_2/count/sample_molecule_info.h5
+TGFb1_GEM_1,/storage/users/sac43cg/res_Samantha/outs/per_sample_outs/TGFb1_GEM_1/count/sample_molecule_info.h5
+TGFb1_GEM_2,/storage/users/sac43cg/res_Samantha/outs/per_sample_outs/TGFb1_GEM_2/count/sample_molecule_info.h5
+CTRL_2D,/storage/users/sac43cg/res_Samantha/outs/per_sample_outs/CTRL_2D/count/sample_molecule_info.h5
+
